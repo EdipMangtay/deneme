@@ -1,0 +1,162 @@
+================================================================================
+EMAIL SPAM DETECTION SYSTEM - SETUP INSTRUCTIONS
+================================================================================
+
+QUICK START (One Command Setup)
+================================================================================
+
+After completing the setup steps below, you can start the system with:
+
+    python app.py
+
+The web interface will be available at: http://localhost:5000
+
+
+STEP-BY-STEP SETUP
+================================================================================
+
+1. CREATE VIRTUAL ENVIRONMENT
+   --------------------------
+   python -m venv venv
+   .\venv\Scripts\Activate.ps1
+
+2. INSTALL DEPENDENCIES
+   --------------------
+   pip install -r requirements.txt
+
+3. CREATE .env FILE
+   -----------------
+   Create a file named ".env" in the email_spam_detector directory with:
+
+   GMAIL_EMAIL=your-email@gmail.com
+   GMAIL_APP_PASSWORD=your-16-character-app-password
+   IMAP_SERVER=imap.gmail.com
+   INBOX_FOLDER=INBOX
+   SPAM_FOLDER=[Gmail]/Spam
+   FETCH_LIMIT=20
+   PORT=5000
+   FLASK_DEBUG=False
+
+4. BUILD DATASET
+   --------------
+   python -m src.dataset_builder --inbox 50 --spam 50
+
+5. TRAIN MODEL
+   ------------
+   python -m src.train_or_prepare
+
+6. RUN APPLICATION
+   ----------------
+   python app.py
+
+Then open: http://localhost:5000
+
+
+GMAIL APP PASSWORD SETUP
+================================================================================
+
+1. Go to: https://myaccount.google.com/security
+2. Enable 2-Step Verification (required)
+3. Go to "App passwords"
+4. Select "Mail" and "Other (Custom name)"
+5. Enter "Email Spam Detector"
+6. Click "Generate"
+7. Copy the 16-character password to your .env file
+
+
+PROJECT STRUCTURE
+================================================================================
+
+email_spam_detector/
+├── app.py                    # Main Flask application
+├── requirements.txt          # Python dependencies
+├── README.md                 # Full documentation
+├── CHECKLIST.md              # Step-by-step checklist
+├── .env                      # Your credentials (create this)
+├── src/
+│   ├── ml_adapter.py        # ML model wrapper
+│   ├── train_or_prepare.py  # Training script
+│   ├── imap_client.py       # Gmail IMAP client
+│   ├── email_parser.py      # Email parsing
+│   ├── anonymize.py         # Data anonymization
+│   ├── dataset_builder.py   # Dataset building
+│   ├── explain.py           # SHAP explainability
+│   └── utils.py             # Utilities
+├── artifacts/
+│   └── checkpoint/          # Trained model (created after training)
+├── data/
+│   └── dataset.csv          # Training dataset (created after building)
+├── templates/
+│   └── index.html           # Web UI
+└── static/
+    └── style.css            # Web UI styles
+
+
+FEATURES IMPLEMENTED
+================================================================================
+
+✅ Customized Dataset (+3 points)
+   - Build dataset from Gmail emails
+   - Automatic anonymization (emails, URLs, phone numbers)
+   - CLI: python -m src.dataset_builder
+
+✅ User Interface (+2 points)
+   - Modern Flask web UI
+   - Real-time email scanning
+   - Color-coded results (red=spam, green=not spam)
+   - Responsive design
+
+✅ SHAP Explainability (+2 points)
+   - Token-level explanations
+   - Shows top 5 tokens influencing classification
+   - Visual indicators for spam/ham tokens
+
+
+TROUBLESHOOTING
+================================================================================
+
+"Model not loaded"
+  → Run: python -m src.train_or_prepare
+
+"Gmail credentials not configured"
+  → Create .env file with GMAIL_EMAIL and GMAIL_APP_PASSWORD
+
+"Checkpoint directory not found"
+  → Train the model first: python -m src.train_or_prepare
+
+IMAP connection errors
+  → Verify App Password is correct (16 chars, no spaces)
+  → Ensure 2-Step Verification is enabled
+
+
+COMMANDS REFERENCE
+================================================================================
+
+# Build dataset
+python -m src.dataset_builder --inbox 50 --spam 50
+
+# Train model
+python -m src.train_or_prepare
+
+# Run application
+python app.py
+
+# Build dataset (append mode)
+python -m src.dataset_builder --inbox 20 --spam 20 --append
+
+
+SUCCESS INDICATORS
+================================================================================
+
+✅ Dataset file created: data/dataset.csv
+✅ Model checkpoint created: artifacts/checkpoint/
+✅ Web server running: http://localhost:5000
+✅ Can scan inbox and see email classifications
+✅ Explanations shown for each email decision
+
+
+================================================================================
+For detailed documentation, see README.md
+================================================================================
+
+

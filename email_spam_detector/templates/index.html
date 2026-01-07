@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Spam Detection System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📧 Email Spam Detection System</h1>
+            <p class="subtitle">AI-powered email classification with explainability</p>
+        </header>
+
+        <div class="controls">
+            <button id="testConnectionBtn" class="btn btn-test">
+                <span class="btn-icon">🔌</span>
+                Test IMAP Connection
+            </button>
+            <button id="fetchInboxBtn" class="btn btn-primary">
+                <span class="btn-icon">📥</span>
+                Fetch Latest Emails (INBOX)
+            </button>
+            <button id="fetchSpamBtn" class="btn btn-primary">
+                <span class="btn-icon">📮</span>
+                Fetch Spam Emails (SPAM)
+            </button>
+            <button id="scanBtn" class="btn btn-secondary">
+                <span class="btn-icon">🔍</span>
+                Scan & Classify Inbox
+            </button>
+            <button id="buildDatasetBtn" class="btn btn-secondary">
+                <span class="btn-icon">📊</span>
+                Build/Update Dataset
+            </button>
+            <button id="trainModelBtn" class="btn btn-secondary">
+                <span class="btn-icon">🤖</span>
+                Train/Refresh Model
+            </button>
+        </div>
+
+        <div id="statusBar" class="status-bar">
+            <span id="statusText">Ready</span>
+            <span id="lastScan" class="last-scan"></span>
+        </div>
+
+        <div id="loadingIndicator" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Processing emails...</p>
+        </div>
+
+        <div id="resultsContainer" class="results-container">
+            <div id="resultsList"></div>
+        </div>
+
+        <footer class="privacy-note">
+            <p>🔒 <strong>Privacy Note:</strong> All email processing is done locally on your machine. 
+            Sensitive information (emails, URLs, phone numbers) is anonymized before storage.</p>
+        </footer>
+    </div>
+
+    <script>
+        const testConnectionBtn = document.getElementById('testConnectionBtn');
+        const fetchInboxBtn = document.getElementById('fetchInboxBtn');
+        const fetchSpamBtn = document.getElementById('fetchSpamBtn');
+        const scanBtn = document.getElementById('scanBtn');
+        const buildDatasetBtn = document.getElementById('buildDatasetBtn');
+        const trainModelBtn = document.getElementById('trainModelBtn');
+        const resultsList = document.getElementById('resultsList');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const statusText = document.getElementById('statusText');
+        const lastScan = document.getElementById('lastScan');
+
+        // Test IMAP connection
+        testConnectionBtn.addEventListener('click', async () => {
+            setLoading(true);
+            statusText.textContent = 'Testing IMAP connection...';
+            
+            try {
+                const response = await fetch('/api/test-connection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusText.textContent = `✅ Connection successful! Found ${data.folders.length} folders.`;
+                    alert(`✅ IMAP Connection Successful!\n\nEmail: ${data.email}\nFolders: ${data.folders.length}\nSpam Folder: ${data.spam_folder || 'Not found'}\n\nCheck console for full folder list.`);
+                } else {
+                    showError(data.error || 'Connection failed');
+                }
+            } catch (error) {
+                showError(`Error: ${error.message}`);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Fetch INBOX emails
+        fetchInboxBtn.addEventListener('click', async () => {
+            setLoading(true);
+            statusText.textContent = 'Fetching emails from INBOX...';
+            
+            try {
+                const response = await fetch('/api/fetch-inbox', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        limit: 20
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayFetchedEmails(data.results, 'INBOX');
+                    lastScan.textContent = `Last fetch: ${new Date(data.timestamp).toLocaleString()}`;
+                    statusText.textContent = `✅ Fetched ${data.count} emails from INBOX`;
+                } else {
+                    showError(data.error || 'Failed to fetch emails');
+                }
+            } catch (error) {
+                showError(`Error: ${error.message}`);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Fetch Spam emails
+        fetchSpamBtn.addEventListener('click', async () => {
+            setLoading(true);
+            statusText.textContent = 'Fetching emails from Spam folder...';
+            
+            try {
+                const response = await fetch('/api/fetch-spam', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        limit: 20
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayFetchedEmails(data.results, 'SPAM');
+                    lastScan.textContent = `Last fetch: ${new Date(data.timestamp).toLocaleString()}`;
+                    statusText.textContent = `✅ Fetched ${data.count} emails from Spam folder`;
+                } else {
+                    showError(data.error || 'Failed to fetch emails');
+                }
+            } catch (error) {
+                showError(`Error: ${error.message}`);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Scan inbox (with classification)
+        scanBtn.addEventListener('click', async () => {
+            setLoading(true);
+            statusText.textContent = 'Scanning inbox...';
+            
+            try {
+                const response = await fetch('/api/scan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        inbox_limit: 20,
+                        spam_limit: 0
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayResults(data.results);
+                    lastScan.textContent = `Last scan: ${new Date(data.timestamp).toLocaleString()}`;
+                    statusText.textContent = `Found ${data.count} emails`;
+                } else {
+                    showError(data.error || 'Failed to scan inbox');
+                }
+            } catch (error) {
+                showError(`Error: ${error.message}`);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Build dataset
+        buildDatasetBtn.addEventListener('click', () => {
+            alert('To build the dataset, run:\n\npython -m src.dataset_builder --inbox 50 --spam 50\n\nin your terminal.');
+        });
+
+        // Train model
+        trainModelBtn.addEventListener('click', () => {
+            alert('To train the model, run:\n\npython -m src.train_or_prepare\n\nin your terminal.');
+        });
+
+        function setLoading(loading) {
+            loadingIndicator.style.display = loading ? 'block' : 'none';
+            testConnectionBtn.disabled = loading;
+            fetchInboxBtn.disabled = loading;
+            fetchSpamBtn.disabled = loading;
+            scanBtn.disabled = loading;
+        }
+
+        function displayFetchedEmails(results, folder) {
+            if (results.length === 0) {
+                resultsList.innerHTML = '<div class="no-results">No emails found.</div>';
+                return;
+            }
+
+            resultsList.innerHTML = results.map(email => `
+                <div class="email-card fetched">
+                    <div class="email-header">
+                        <h3 class="email-subject">${escapeHtml(email.subject)}</h3>
+                        <div class="email-badge badge-fetched">
+                            📁 ${folder}
+                        </div>
+                    </div>
+                    <div class="email-snippet">${escapeHtml(email.snippet)}</div>
+                    <div class="email-meta">
+                        <span class="email-date">${formatDate(email.date)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayResults(results) {
+            if (results.length === 0) {
+                resultsList.innerHTML = '<div class="no-results">No emails found.</div>';
+                return;
+            }
+
+            resultsList.innerHTML = results.map(email => `
+                <div class="email-card ${email.is_spam ? 'spam' : 'not-spam'}">
+                    <div class="email-header">
+                        <h3 class="email-subject">${escapeHtml(email.subject)}</h3>
+                        <div class="email-badge ${email.is_spam ? 'badge-spam' : 'badge-not-spam'}">
+                            ${email.is_spam ? '🚨 SPAM' : '✅ NOT SPAM'}
+                        </div>
+                    </div>
+                    <div class="email-snippet">${escapeHtml(email.snippet)}</div>
+                    <div class="email-meta">
+                        <span class="email-probability">
+                            Confidence: <strong>${email.probability_formatted}</strong>
+                        </span>
+                        <span class="email-date">${formatDate(email.date)}</span>
+                    </div>
+                    ${email.explanations && email.explanations.length > 0 ? `
+                        <div class="explanations">
+                            <strong>Why this decision?</strong>
+                            <div class="tokens">
+                                ${email.explanations.map(exp => `
+                                    <span class="token ${exp.impact > 0 ? 'token-spam' : 'token-not-spam'}" 
+                                          title="Impact: ${exp.impact_formatted}">
+                                        ${escapeHtml(exp.token)}
+                                    </span>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function showError(message) {
+            statusText.textContent = `Error: ${message}`;
+            resultsList.innerHTML = `<div class="error-message">${escapeHtml(message)}</div>`;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'Unknown date';
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleString();
+            } catch {
+                return dateStr;
+            }
+        }
+
+        // Check status on load
+        fetch('/api/status')
+            .then(res => res.json())
+            .then(data => {
+                if (data.model_loaded) {
+                    statusText.textContent = `Model loaded: ${data.model_name}`;
+                } else {
+                    statusText.textContent = 'Model not loaded. Please train the model first.';
+                }
+            })
+            .catch(err => {
+                console.error('Error checking status:', err);
+            });
+    </script>
+</body>
+</html>
+

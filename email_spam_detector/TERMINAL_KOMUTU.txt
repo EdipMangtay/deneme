@@ -1,0 +1,48 @@
+============================================================
+🚀 TEK KOMUTLA ÇALIŞTIRMA
+============================================================
+
+1. ÖNCE PAKETLERİ KURUN:
+   cd C:\Users\Mangtay\Desktop\spam-detection-master\email_spam_detector
+   pip install tf-keras
+
+2. SONRA TEK KOMUTLA BAŞLATIN:
+   python run_complete_pipeline.py
+
+VEYA ÇİFT TIKLAMA İLE:
+   RUN.bat dosyasına çift tıklayın
+
+============================================================
+📋 NE YAPACAK?
+============================================================
+
+1. ✅ Tüm CSV'leri birleştirir (_w1998.csv, abdallah.csv, kucev.csv)
+2. ✅ Modeli eğitir (5-15 dakika sürebilir)
+3. ✅ Web sunucusunu başlatır
+4. ✅ Tarayıcıyı otomatik açar
+5. ✅ Pipeline'ı çalıştırır:
+   - Gmail bağlantısı
+   - Email çekme (INBOX + SPAM)
+   - Sınıflandırma
+   - Gerçek label'larla karşılaştırma
+   - Rapor gösterimi (Accuracy, Precision, Recall, F1, Confusion Matrix)
+
+============================================================
+🎯 SONUÇLAR
+============================================================
+
+- Her email için:
+  * Model tahmini (SPAM / NOT SPAM)
+  * Gerçek durum (Gmail'in spam klasöründen mi geldi?)
+  * Doğru mu yanlış mı? (✓ Correct / ✗ Incorrect)
+  * Confidence skoru
+  * "Why?" token açıklamaları
+
+- Genel rapor:
+  * Accuracy, Precision, Recall, F1 Score
+  * Confusion Matrix
+  * Toplam doğru/yanlış sayıları
+
+============================================================
+
+

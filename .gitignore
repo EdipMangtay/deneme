@@ -1,0 +1,38 @@
+.idea
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Environment variables (güvenlik için)
+.env
+.env.local
+.env.*.local
+
+# Model artifacts and checkpoints (çok büyük dosyalar - 1.5GB+)
+email_spam_detector/artifacts/
+*.safetensors
+*.pt
+*.bin
+*.pth
+*.ckpt
+
+# TensorBoard logs
+*.tfevents.*
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

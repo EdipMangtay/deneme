@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Spam Detection - Automated Pipeline</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='pipeline.css') }}">
+</head>
+<body>
+    <div class="pipeline-container">
+        <!-- Header -->
+        <header class="pipeline-header">
+            <div class="logo">📧</div>
+            <h1>Email Spam Detection System</h1>
+            <p class="tagline">AI-Powered Email Classification Pipeline</p>
+        </header>
+
+        <!-- Pipeline Steps -->
+        <div class="pipeline-steps">
+            <!-- Step 1: Connection -->
+            <div class="step" id="step-connection">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <div class="step-info">
+                        <h2>Connecting to Gmail</h2>
+                        <p class="step-description">Establishing secure connection...</p>
+                    </div>
+                    <div class="step-status" id="status-connection">
+                        <div class="spinner-small"></div>
+                    </div>
+                </div>
+                <div class="step-content" id="content-connection">
+                    <div class="connection-info">
+                        <div class="info-item">
+                            <span class="info-label">Email:</span>
+                            <span class="info-value" id="connected-email">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Status:</span>
+                            <span class="info-value" id="connection-status">Connecting...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Fetching Data -->
+            <div class="step" id="step-fetching">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <div class="step-info">
+                        <h2>Fetching Emails</h2>
+                        <p class="step-description">Retrieving emails from your inbox...</p>
+                    </div>
+                    <div class="step-status" id="status-fetching">
+                        <div class="spinner-small"></div>
+                    </div>
+                </div>
+                <div class="step-content" id="content-fetching">
+                    <div class="progress-section">
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="fetch-progress"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span id="fetch-count">0</span> emails fetched
+                        </div>
+                    </div>
+                    <div class="fetch-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">INBOX:</span>
+                            <span class="stat-value" id="inbox-count">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">SPAM:</span>
+                            <span class="stat-value" id="spam-count">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Building Dataset -->
+            <div class="step" id="step-dataset">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <div class="step-info">
+                        <h2>Building Dataset</h2>
+                        <p class="step-description">Preparing training data...</p>
+                    </div>
+                    <div class="step-status" id="status-dataset">
+                        <div class="spinner-small"></div>
+                    </div>
+                </div>
+                <div class="step-content" id="content-dataset">
+                    <div class="progress-section">
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="dataset-progress"></div>
+                        </div>
+                        <div class="progress-text">
+                            Processing and anonymizing emails...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Training Model -->
+            <div class="step" id="step-training">
+                <div class="step-header">
+                    <div class="step-number">4</div>
+                    <div class="step-info">
+                        <h2>Training AI Model</h2>
+                        <p class="step-description">Training with w1998, abdallah, and kucev datasets...</p>
+                    </div>
+                    <div class="step-status" id="status-training">
+                        <div class="spinner-small"></div>
+                    </div>
+                </div>
+                <div class="step-content" id="content-training">
+                    <div class="training-animation">
+                        <div class="neural-network">
+                            <div class="neuron"></div>
+                            <div class="neuron"></div>
+                            <div class="neuron"></div>
+                            <div class="neuron"></div>
+                        </div>
+                    </div>
+                    <div class="progress-section">
+                        <div class="progress-bar-container">
+                            <div class="progress-bar animated" id="training-progress"></div>
+                        </div>
+                        <div class="progress-text">
+                            <span id="training-status">Combining datasets and initializing model...</span>
+                        </div>
+                        <div class="training-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Epoch:</span>
+                                <span class="stat-value" id="epoch-count">0/2</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Accuracy:</span>
+                                <span class="stat-value" id="accuracy-value">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 5: Results -->
+            <div class="step" id="step-results">
+                <div class="step-header">
+                    <div class="step-number">5</div>
+                    <div class="step-info">
+                        <h2>Classification Results</h2>
+                        <p class="step-description">Analyzing your emails...</p>
+                    </div>
+                    <div class="step-status" id="status-results">
+                        <div class="spinner-small"></div>
+                    </div>
+                </div>
+                <div class="step-content" id="content-results">
+                    <div class="results-summary">
+                        <div class="summary-card not-spam">
+                            <div class="summary-icon">✅</div>
+                            <div class="summary-value" id="not-spam-count">0</div>
+                            <div class="summary-label">Not Spam</div>
+                        </div>
+                        <div class="summary-card spam">
+                            <div class="summary-icon">🚨</div>
+                            <div class="summary-value" id="spam-detected-count">0</div>
+                            <div class="summary-label">Spam Detected</div>
+                        </div>
+                    </div>
+                    <div class="results-list" id="results-list">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="pipeline-actions">
+            <button id="startPipelineBtn" class="btn-primary">🚀 Start Pipeline</button>
+            <button id="skipToResultsBtn" class="btn-secondary" style="display: none;">Skip to Results</button>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+        const steps = ['connection', 'fetching', 'dataset', 'training', 'results'];
+
+        // Start Pipeline Button
+        document.getElementById('startPipelineBtn').addEventListener('click', async () => {
+            document.getElementById('startPipelineBtn').disabled = true;
+            document.getElementById('startPipelineBtn').textContent = 'Pipeline Running...';
+            await runPipeline();
+        });
+
+        async function runPipeline() {
+            // Step 1: Connection
+            await stepConnection();
+            
+            // Step 2: Fetching
+            await stepFetching();
+            
+            // Step 3: Dataset
+            await stepDataset();
+            
+            // Step 4: Training
+            await stepTraining();
+            
+            // Step 5: Results
+            await stepResults();
+        }
+
+        async function stepConnection() {
+            updateStepStatus('connection', 'loading');
+            const response = await fetch('/api/test-connection', { method: 'POST' });
+            const data = await response.json();
+            
+            if (data.success) {
+                document.getElementById('connected-email').textContent = data.email;
+                document.getElementById('connection-status').textContent = 'Connected ✓';
+                document.getElementById('connection-status').style.color = '#28a745';
+                updateStepStatus('connection', 'complete');
+                await sleep(1000);
+            } else {
+                updateStepStatus('connection', 'error');
+                throw new Error(data.error);
+            }
+        }
+
+        async function stepFetching() {
+            updateStepStatus('fetching', 'loading');
+            const inboxLimit = 50;
+            const spamLimit = 50;
+            
+            // Fetch INBOX
+            let inboxResponse = await fetch('/api/fetch-inbox', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ limit: inboxLimit })
+            });
+            const inboxData = await inboxResponse.json();
+            
+            updateProgress('fetch-progress', 50);
+            document.getElementById('inbox-count').textContent = inboxData.count || 0;
+            
+            // Fetch SPAM
+            let spamResponse = await fetch('/api/fetch-spam', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ limit: spamLimit })
+            });
+            const spamData = await spamResponse.json();
+            
+            updateProgress('fetch-progress', 100);
+            document.getElementById('spam-count').textContent = spamData.count || 0;
+            document.getElementById('fetch-count').textContent = (inboxData.count || 0) + (spamData.count || 0);
+            
+            updateStepStatus('fetching', 'complete');
+            await sleep(1500);
+        }
+
+        async function stepDataset() {
+            updateStepStatus('dataset', 'loading');
+            
+            // Build dataset via API
+            const response = await fetch('/api/build-dataset', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ inbox_limit: 50, spam_limit: 50 })
+            });
+            
+            if (response.ok) {
+                // Simulate progress while building
+                for (let i = 0; i <= 100; i += 10) {
+                    updateProgress('dataset-progress', i);
+                    await sleep(300);
+                }
+                
+                const data = await response.json();
+                if (data.success) {
+                    updateStepStatus('dataset', 'complete');
+                    await sleep(1000);
+                } else {
+                    updateStepStatus('dataset', 'error');
+                    throw new Error(data.error);
+                }
+            } else {
+                updateStepStatus('dataset', 'error');
+                throw new Error('Failed to build dataset');
+            }
+        }
+
+        async function stepTraining() {
+            updateStepStatus('training', 'loading');
+            
+            // Train with all existing datasets via API
+            const response = await fetch('/api/train-with-all-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (response.ok) {
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                if (data.progress) {
+                                    updateProgress('training-progress', data.progress);
+                                }
+                                if (data.epoch) {
+                                    document.getElementById('epoch-count').textContent = `${data.epoch}/2`;
+                                }
+                                if (data.accuracy) {
+                                    document.getElementById('accuracy-value').textContent = `${(data.accuracy * 100).toFixed(1)}%`;
+                                }
+                                if (data.status) {
+                                    document.getElementById('training-status').textContent = data.status;
+                                }
+                            } catch (e) {
+                                console.error('Error parsing training data:', e);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            updateStepStatus('training', 'complete');
+            await sleep(1000);
+        }
+
+        async function stepResults() {
+            updateStepStatus('results', 'loading');
+            
+            // Fetch and classify emails with ground truth comparison
+            const response = await fetch('/api/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ inbox_limit: 20, spam_limit: 20 })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const spamCount = data.results.filter(r => r.is_spam).length;
+                const notSpamCount = data.results.length - spamCount;
+                
+                document.getElementById('spam-detected-count').textContent = spamCount;
+                document.getElementById('not-spam-count').textContent = notSpamCount;
+                
+                // Display results with ground truth comparison
+                displayResults(data.results, data.metrics);
+                updateStepStatus('results', 'complete');
+            } else {
+                updateStepStatus('results', 'error');
+            }
+        }
+        
+        function displayFetchedResults(results) {
+            const resultsList = document.getElementById('results-list');
+            resultsList.innerHTML = results.map(email => `
+                <div class="result-card fetched">
+                    <div class="result-header">
+                        <h3>${escapeHtml(email.subject)}</h3>
+                        <div class="result-badge badge-fetched">
+                            📁 ${email.folder || 'INBOX'}
+                        </div>
+                    </div>
+                    <div class="result-snippet">${escapeHtml(email.snippet)}</div>
+                    <div class="result-meta">
+                        <span>${formatDate(email.date)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStepStatus(step, status) {
+            const stepEl = document.getElementById(`step-${step}`);
+            const statusEl = document.getElementById(`status-${step}`);
+            
+            stepEl.className = `step step-${status}`;
+            
+            if (status === 'complete') {
+                statusEl.innerHTML = '✓';
+                statusEl.style.color = '#28a745';
+            } else if (status === 'error') {
+                statusEl.innerHTML = '✗';
+                statusEl.style.color = '#dc3545';
+            } else {
+                statusEl.innerHTML = '<div class="spinner-small"></div>';
+            }
+        }
+
+        function updateProgress(progressId, percentage) {
+            const progressBar = document.getElementById(progressId);
+            progressBar.style.width = `${percentage}%`;
+        }
+
+        function displayResults(results, metrics) {
+            const resultsList = document.getElementById('results-list');
+            
+            // Display metrics report first
+            let metricsHtml = '';
+            if (metrics) {
+                metricsHtml = `
+                    <div class="metrics-report">
+                        <h3>📊 Classification Report</h3>
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-label">Accuracy</div>
+                                <div class="metric-value">${(metrics.accuracy * 100).toFixed(1)}%</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Precision</div>
+                                <div class="metric-value">${(metrics.precision * 100).toFixed(1)}%</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Recall</div>
+                                <div class="metric-value">${(metrics.recall * 100).toFixed(1)}%</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">F1 Score</div>
+                                <div class="metric-value">${(metrics.f1_score * 100).toFixed(1)}%</div>
+                            </div>
+                        </div>
+                        <div class="confusion-matrix">
+                            <h4>Confusion Matrix</h4>
+                            <table>
+                                <tr>
+                                    <th></th>
+                                    <th>Predicted: NOT SPAM</th>
+                                    <th>Predicted: SPAM</th>
+                                </tr>
+                                <tr>
+                                    <th>Actual: NOT SPAM</th>
+                                    <td class="correct">${metrics.true_negative}</td>
+                                    <td class="incorrect">${metrics.false_positive}</td>
+                                </tr>
+                                <tr>
+                                    <th>Actual: SPAM</th>
+                                    <td class="incorrect">${metrics.false_negative}</td>
+                                    <td class="correct">${metrics.true_positive}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="summary-stats">
+                            <p><strong>Total:</strong> ${metrics.total} emails | 
+                               <strong>Correct:</strong> <span style="color: #28a745;">${metrics.correct}</span> | 
+                               <strong>Incorrect:</strong> <span style="color: #dc3545;">${metrics.incorrect}</span></p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Display email results
+            const emailsHtml = results.map(email => {
+                const isCorrect = email.is_correct !== false;
+                const correctnessBadge = isCorrect 
+                    ? '<span class="correctness-badge correct">✓ Correct</span>'
+                    : '<span class="correctness-badge incorrect">✗ Incorrect</span>';
+                
+                return `
+                    <div class="result-card ${email.is_spam ? 'spam' : 'not-spam'} ${isCorrect ? '' : 'incorrect-prediction'}">
+                        <div class="result-header">
+                            <h3>${escapeHtml(email.subject)}</h3>
+                            <div class="result-badges">
+                                <div class="result-badge ${email.is_spam ? 'badge-spam' : 'badge-not-spam'}">
+                                    ${email.is_spam ? '🚨 SPAM' : '✅ NOT SPAM'}
+                                </div>
+                                ${correctnessBadge}
+                            </div>
+                        </div>
+                        <div class="ground-truth">
+                            <strong>Ground Truth:</strong> ${email.ground_truth || 'Unknown'}
+                        </div>
+                        <div class="result-snippet">${escapeHtml(email.snippet)}</div>
+                        <div class="result-meta">
+                            <span>Confidence: <strong>${email.probability_formatted}</strong></span>
+                            <span>${formatDate(email.date)}</span>
+                        </div>
+                        ${email.explanations && email.explanations.length > 0 ? `
+                            <div class="explanations">
+                                <strong>Why this decision?</strong>
+                                <div class="tokens">
+                                    ${email.explanations.map(exp => `
+                                        <span class="token ${exp.impact > 0 ? 'token-spam' : 'token-not-spam'}" 
+                                              title="Impact: ${exp.impact_formatted}">
+                                            ${escapeHtml(exp.token)}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            resultsList.innerHTML = metricsHtml + emailsHtml;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'Unknown date';
+            try {
+                return new Date(dateStr).toLocaleString();
+            } catch {
+                return dateStr;
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>
+
