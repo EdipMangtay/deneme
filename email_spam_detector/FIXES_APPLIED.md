@@ -54,3 +54,4 @@ Bu komut gerçekten model eğitecek (5-15 dakika sürebilir).
 **Pipeline artık tam çalışır durumda!** 🚀
 
 
+

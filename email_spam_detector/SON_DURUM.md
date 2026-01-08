@@ -50,3 +50,4 @@ python pipeline.py
 **Artık tam çalışır durumda!** 🚀
 
 
+
