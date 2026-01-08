@@ -42,13 +42,14 @@ class MLAdapter:
     Loads trained model from checkpoint directory.
     """
     
-    def __init__(self, checkpoint_dir=None, model_name="distilbert/distilbert-base-uncased"):
+    def __init__(self, checkpoint_dir=None, model_name="distilbert/distilbert-base-uncased", spam_threshold=None):
         """
         Initialize ML adapter.
         
         Args:
             checkpoint_dir: Path to saved model checkpoint (default: artifacts/checkpoint)
             model_name: HuggingFace model name (must match training)
+            spam_threshold: Decision threshold for spam (default: 0.5). If None, will read from SPAM_THRESHOLD env.
         """
         self.model_name = model_name
         # Device will be set when torch is imported
@@ -64,6 +65,17 @@ class MLAdapter:
         # Standard labels for binary classification
         self.label_map = {0: "NOT SPAM", 1: "SPAM"}
         self.id_to_label = {0: 0, 1: 1}  # For binary: 0=not spam, 1=spam
+
+        # Decision threshold for spam (can be tuned for better recall/precision tradeoff)
+        if spam_threshold is not None:
+            self.spam_threshold = float(spam_threshold)
+        else:
+            # Allow overriding via environment variable without code change
+            try:
+                self.spam_threshold = float(os.getenv("SPAM_THRESHOLD", "0.5"))
+            except ValueError:
+                self.spam_threshold = 0.5
+        logger.info(f"Spam decision threshold set to {self.spam_threshold}")
         
     def load_model(self):
         """Load trained model and tokenizer from checkpoint."""
@@ -71,7 +83,21 @@ class MLAdapter:
         _import_ml_libs()
         
         # Update device after torch is imported
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        if torch.cuda.is_available():
+            self.device = "cuda"
+            try:
+                gpu_name = torch.cuda.get_device_name(0)
+            except Exception:
+                gpu_name = "CUDA device"
+            logger.info(f"GPU detected, using device: {gpu_name}")
+            # Enable cuDNN autotuner for better performance on fixed input sizes
+            try:
+                torch.backends.cudnn.benchmark = True
+            except Exception:
+                pass
+        else:
+            self.device = "cpu"
+            logger.info("No GPU detected, using CPU")
         
         try:
             if not os.path.exists(self.checkpoint_dir):
@@ -81,6 +107,7 @@ class MLAdapter:
                 )
             
             logger.info(f"Loading model from {self.checkpoint_dir}")
+            # Load tokenizer (from model name; it is cached after first download)
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
             
             # Find the best checkpoint
@@ -125,9 +152,17 @@ class MLAdapter:
                 num_labels=2,
                 ignore_mismatched_sizes=True
             ).to(self.device)
+
+            # Use eval mode and optional half precision on GPU for faster inference
             self.model.eval()
-            
-            logger.info("Model loaded successfully")
+            if self.device == "cuda":
+                try:
+                    self.model = self.model.half()
+                    logger.info("Model converted to FP16 for faster GPU inference")
+                except Exception as e:
+                    logger.warning(f"Could not convert model to FP16: {e}")
+
+            logger.info(f"Model loaded successfully on device: {self.device}")
             return True
             
         except Exception as e:
@@ -164,21 +199,30 @@ class MLAdapter:
             return_tensors="pt"
         ).to(self.device)
         
-        # Predict
+        # Predict (optimized for GPU if available)
         with torch.no_grad():
-            outputs = self.model(**inputs)
+            use_amp = (self.device == "cuda" and hasattr(torch.cuda, "amp"))
+            if use_amp:
+                with torch.cuda.amp.autocast():
+                    outputs = self.model(**inputs)
+            else:
+                outputs = self.model(**inputs)
+
             logits = outputs.logits
             probabilities = torch.softmax(logits, dim=-1)
-        
-        # Get prediction
-        predicted_id = probabilities.argmax().item()
-        confidence = probabilities[0][predicted_id].item()
-        
+
+        # Move to CPU for further processing
+        probabilities = probabilities.cpu()
+
         # Get probabilities for both classes
         prob_not_spam = probabilities[0][0].item()
         prob_spam = probabilities[0][1].item()
-        
-        return {
+
+        # Decision with configurable threshold (default 0.5)
+        predicted_id = 1 if prob_spam >= self.spam_threshold else 0
+        confidence = prob_spam if predicted_id == 1 else prob_not_spam
+
+        result = {
             "label": predicted_id,
             "label_name": self.label_map[predicted_id],
             "probability": confidence,
@@ -187,6 +231,76 @@ class MLAdapter:
                 "SPAM": prob_spam
             }
         }
+
+        logger.info(
+            f"Prediction: {result['label_name']} "
+            f"(prob_not_spam={prob_not_spam:.4f}, prob_spam={prob_spam:.4f}, "
+            f"threshold={self.spam_threshold})"
+        )
+
+        return result
+
+    def predict_batch(self, texts):
+        """
+        Predict multiple emails at once (much faster on GPU).
+        
+        Args:
+            texts: List of email texts.
+        
+        Returns:
+            List of prediction dicts (same format as predict_email).
+        """
+        _import_ml_libs()
+
+        if self.model is None or self.tokenizer is None:
+            self.load_model()
+
+        if not texts:
+            return []
+
+        # Tokenize as a batch
+        inputs = self.tokenizer(
+            texts,
+            truncation=True,
+            padding=True,
+            max_length=50,
+            add_special_tokens=True,
+            return_tensors="pt"
+        ).to(self.device)
+
+        # Batch predict
+        with torch.no_grad():
+            use_amp = (self.device == "cuda" and hasattr(torch.cuda, "amp"))
+            if use_amp:
+                with torch.cuda.amp.autocast():
+                    outputs = self.model(**inputs)
+            else:
+                outputs = self.model(**inputs)
+
+            logits = outputs.logits
+            probabilities = torch.softmax(logits, dim=-1).cpu()
+
+        results = []
+        for probs in probabilities:
+            prob_not_spam = probs[0].item()
+            prob_spam = probs[1].item()
+            predicted_id = 1 if prob_spam >= self.spam_threshold else 0
+            confidence = prob_spam if predicted_id == 1 else prob_not_spam
+            results.append({
+                "label": predicted_id,
+                "label_name": self.label_map[predicted_id],
+                "probability": confidence,
+                "probabilities": {
+                    "NOT SPAM": prob_not_spam,
+                    "SPAM": prob_spam
+                }
+            })
+
+        logger.info(
+            f"Batch prediction completed for {len(texts)} emails on device={self.device} "
+            f"with threshold={self.spam_threshold}"
+        )
+        return results
     
     def get_tokenizer(self):
         """Get the tokenizer (needed for SHAP explanations)."""

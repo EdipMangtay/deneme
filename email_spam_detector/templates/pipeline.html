@@ -77,76 +77,10 @@
                 </div>
             </div>
 
-            <!-- Step 3: Building Dataset -->
-            <div class="step" id="step-dataset">
-                <div class="step-header">
-                    <div class="step-number">3</div>
-                    <div class="step-info">
-                        <h2>Building Dataset</h2>
-                        <p class="step-description">Preparing training data...</p>
-                    </div>
-                    <div class="step-status" id="status-dataset">
-                        <div class="spinner-small"></div>
-                    </div>
-                </div>
-                <div class="step-content" id="content-dataset">
-                    <div class="progress-section">
-                        <div class="progress-bar-container">
-                            <div class="progress-bar" id="dataset-progress"></div>
-                        </div>
-                        <div class="progress-text">
-                            Processing and anonymizing emails...
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 4: Training Model -->
-            <div class="step" id="step-training">
-                <div class="step-header">
-                    <div class="step-number">4</div>
-                    <div class="step-info">
-                        <h2>Training AI Model</h2>
-                        <p class="step-description">Training with w1998, abdallah, and kucev datasets...</p>
-                    </div>
-                    <div class="step-status" id="status-training">
-                        <div class="spinner-small"></div>
-                    </div>
-                </div>
-                <div class="step-content" id="content-training">
-                    <div class="training-animation">
-                        <div class="neural-network">
-                            <div class="neuron"></div>
-                            <div class="neuron"></div>
-                            <div class="neuron"></div>
-                            <div class="neuron"></div>
-                        </div>
-                    </div>
-                    <div class="progress-section">
-                        <div class="progress-bar-container">
-                            <div class="progress-bar animated" id="training-progress"></div>
-                        </div>
-                        <div class="progress-text">
-                            <span id="training-status">Combining datasets and initializing model...</span>
-                        </div>
-                        <div class="training-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">Epoch:</span>
-                                <span class="stat-value" id="epoch-count">0/2</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Accuracy:</span>
-                                <span class="stat-value" id="accuracy-value">-</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 5: Results -->
+            <!-- Step 3: Results -->
             <div class="step" id="step-results">
                 <div class="step-header">
-                    <div class="step-number">5</div>
+                    <div class="step-number">3</div>
                     <div class="step-info">
                         <h2>Classification Results</h2>
                         <p class="step-description">Analyzing your emails...</p>
@@ -184,7 +118,8 @@
 
     <script>
         let currentStep = 0;
-        const steps = ['connection', 'fetching', 'dataset', 'training', 'results'];
+        const steps = ['connection', 'fetching', 'results'];
+        let scanResults = null; // Store scan results globally
 
         // Start Pipeline Button
         document.getElementById('startPipelineBtn').addEventListener('click', async () => {
@@ -197,16 +132,10 @@
             // Step 1: Connection
             await stepConnection();
             
-            // Step 2: Fetching
+            // Step 2: Fetching & Classification
             await stepFetching();
             
-            // Step 3: Dataset
-            await stepDataset();
-            
-            // Step 4: Training
-            await stepTraining();
-            
-            // Step 5: Results
+            // Step 3: Results
             await stepResults();
         }
 
@@ -232,133 +161,43 @@
             const inboxLimit = 50;
             const spamLimit = 50;
             
-            // Fetch INBOX
-            let inboxResponse = await fetch('/api/fetch-inbox', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ limit: inboxLimit })
-            });
-            const inboxData = await inboxResponse.json();
-            
-            updateProgress('fetch-progress', 50);
-            document.getElementById('inbox-count').textContent = inboxData.count || 0;
-            
-            // Fetch SPAM
-            let spamResponse = await fetch('/api/fetch-spam', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ limit: spamLimit })
-            });
-            const spamData = await spamResponse.json();
-            
-            updateProgress('fetch-progress', 100);
-            document.getElementById('spam-count').textContent = spamData.count || 0;
-            document.getElementById('fetch-count').textContent = (inboxData.count || 0) + (spamData.count || 0);
-            
-            updateStepStatus('fetching', 'complete');
-            await sleep(1500);
-        }
-
-        async function stepDataset() {
-            updateStepStatus('dataset', 'loading');
-            
-            // Build dataset via API
-            const response = await fetch('/api/build-dataset', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ inbox_limit: 50, spam_limit: 50 })
-            });
-            
-            if (response.ok) {
-                // Simulate progress while building
-                for (let i = 0; i <= 100; i += 10) {
-                    updateProgress('dataset-progress', i);
-                    await sleep(300);
-                }
-                
-                const data = await response.json();
-                if (data.success) {
-                    updateStepStatus('dataset', 'complete');
-                    await sleep(1000);
-                } else {
-                    updateStepStatus('dataset', 'error');
-                    throw new Error(data.error);
-                }
-            } else {
-                updateStepStatus('dataset', 'error');
-                throw new Error('Failed to build dataset');
-            }
-        }
-
-        async function stepTraining() {
-            updateStepStatus('training', 'loading');
-            
-            // Train with all existing datasets via API
-            const response = await fetch('/api/train-with-all-data', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            
-            if (response.ok) {
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n');
-                    
-                    for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            try {
-                                const data = JSON.parse(line.slice(6));
-                                if (data.progress) {
-                                    updateProgress('training-progress', data.progress);
-                                }
-                                if (data.epoch) {
-                                    document.getElementById('epoch-count').textContent = `${data.epoch}/2`;
-                                }
-                                if (data.accuracy) {
-                                    document.getElementById('accuracy-value').textContent = `${(data.accuracy * 100).toFixed(1)}%`;
-                                }
-                                if (data.status) {
-                                    document.getElementById('training-status').textContent = data.status;
-                                }
-                            } catch (e) {
-                                console.error('Error parsing training data:', e);
-                            }
-                        }
-                    }
-                }
-            }
-            
-            updateStepStatus('training', 'complete');
-            await sleep(1000);
-        }
-
-        async function stepResults() {
-            updateStepStatus('results', 'loading');
-            
-            // Fetch and classify emails with ground truth comparison
+            // Fetch and classify emails (scan does both)
             const response = await fetch('/api/scan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ inbox_limit: 20, spam_limit: 20 })
+                body: JSON.stringify({ inbox_limit: inboxLimit, spam_limit: spamLimit })
             });
             
             const data = await response.json();
             
             if (data.success) {
-                const spamCount = data.results.filter(r => r.is_spam).length;
-                const notSpamCount = data.results.length - spamCount;
+                scanResults = data; // Store results globally
+                updateProgress('fetch-progress', 100);
+                document.getElementById('inbox-count').textContent = data.stats?.inbox_count || 0;
+                document.getElementById('spam-count').textContent = data.stats?.spam_count || 0;
+                document.getElementById('fetch-count').textContent = data.stats?.total_emails || data.results?.length || 0;
+                
+                updateStepStatus('fetching', 'complete');
+                await sleep(1000);
+            } else {
+                updateStepStatus('fetching', 'error');
+                throw new Error(data.error || 'Failed to fetch emails');
+            }
+        }
+
+        async function stepResults() {
+            updateStepStatus('results', 'loading');
+            
+            // Use results already fetched in stepFetching
+            if (scanResults && scanResults.success) {
+                const spamCount = scanResults.results.filter(r => r.is_spam).length;
+                const notSpamCount = scanResults.results.length - spamCount;
                 
                 document.getElementById('spam-detected-count').textContent = spamCount;
                 document.getElementById('not-spam-count').textContent = notSpamCount;
                 
                 // Display results with ground truth comparison
-                displayResults(data.results, data.metrics);
+                displayResults(scanResults.results, scanResults.metrics);
                 updateStepStatus('results', 'complete');
             } else {
                 updateStepStatus('results', 'error');

@@ -1,16 +1,13 @@
 @echo off
-chcp 65001 >nul
 echo ======================================================================
-echo Email Spam Detection System
+echo Email Spam Detection - Complete Pipeline
 echo ======================================================================
 echo.
-echo Starting web server...
-echo Server: http://localhost:5000
-echo.
-echo ======================================================================
+echo Starting pipeline...
 echo.
 
 cd /d "%~dp0"
 python run_complete_pipeline.py
 
 pause
+
